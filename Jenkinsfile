@@ -21,6 +21,77 @@ pipeline {
             }
         }
 
+        stage('Build & SonarQube analysis') {
+            steps {
+                script {
+                    if (env.BRANCH_NAME == 'master' || env.BRANCH_NAME == 'develop') {
+                        withSonarQubeEnv('SonarQube') {
+                            sh "mvn -Dmaven.test.failure.ignore=true -Dtest=HelloControllerTest clean package sonar:sonar"
+                        }
+                    } else {
+                        echo "Current branch " + env.BRANCH_NAME + " won't run this step"
+                    }
+                }
+            }
+            post {
+                success {
+                    script {
+                        if (env.BRANCH_NAME == 'master' || env.BRANCH_NAME == 'develop') {
+                            junit '**/target/surefire-reports/TEST-*.xml'
+                            archiveArtifacts 'target/*.jar'
+                        }
+                    }
+                }
+            }
+        }
 
+        stage("Quality Gate") {
+            steps {
+                script {
+                    if (env.BRANCH_NAME == 'master' || env.BRANCH_NAME == 'develop') {
+                        timeout(time: 5, unit: 'MINUTES') {
+                            waitForQualityGate abortPipeline: true
+                        }
+                    } else {
+                        echo "Current branch " + env.BRANCH_NAME + " won't run this step"
+                    }
+                }
+            }
+        }
+
+        stage('Publish') {
+            environment {
+                registryCredential = 'dockerhub'
+            }
+
+            steps{
+                script {
+                    if (env.BRANCH_NAME == 'master') {
+                        def appimage = docker.build registry
+                        docker.withRegistry( '', registryCredential ) {
+                            appimage.push()
+                            appimage.push('latest')
+                        }
+                    } else {
+                        echo "Current branch " + env.BRANCH_NAME + " won't run this step"
+                    }
+                }
+            }
+        }
+
+
+
+        stage('Deploy') {
+            steps {
+                script {
+                    if (env.BRANCH_NAME == 'master') {
+                        sh "kubectl apply -f deployment.yml"
+                        sh "kubectl apply -f service.yml"
+                    } else {
+                       echo "Current branch " + env.BRANCH_NAME + " won't run this step"
+                    }
+                }
+            }
+        }
     }
 }
