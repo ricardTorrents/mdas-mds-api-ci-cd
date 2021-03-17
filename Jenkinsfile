@@ -58,7 +58,17 @@ pipeline {
                 }
             }
         }
-
+        stage('Acceptance Tests') {
+            steps {
+                script {
+                    if (env.BRANCH_NAME == 'master') {
+                        sh "mvn -Dtest=HelloControllerTestIT test"
+                    } else {
+                        echo "Current branch " + env.BRANCH_NAME + " won't run this step"
+                    }
+                }
+            }
+        }
         stage('Publish') {
             environment {
                 registryCredential = 'dockerhub'
