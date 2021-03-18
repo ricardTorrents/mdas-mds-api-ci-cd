@@ -7,6 +7,6 @@ public class HelloControllerTestIT {
 
     @Test
     public void testHelloEndpoint() {
-        Assert.assertTrue(new HelloController().hello().equals("Hello World !!"));
+        Assert.assertTrue(new HelloController().hello().equals("Hello class !!"));
     }
 }

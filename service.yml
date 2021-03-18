@@ -7,7 +7,7 @@ metadata:
 spec:
   selector:
     app: helloworld-app
-    version: mdas1
+    version: mdas2
   type: NodePort
   ports:
     - protocol: TCP

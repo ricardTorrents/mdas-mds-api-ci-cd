@@ -12,7 +12,7 @@ spec:
       name: helloworld-blue-pod
       labels:
         app: helloworld-app
-        version: mdas1
+        version: mdas2
     spec:
       containers:
         - name: helloworld-container
